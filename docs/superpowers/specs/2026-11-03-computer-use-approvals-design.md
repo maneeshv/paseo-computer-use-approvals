@@ -61,15 +61,34 @@ v0.14.0 (`handleMcpElicitationRequest`, around line 7166). A Codex MCP elicitati
 | `name`                 | `"CodexMcpElicitation"`                                       |
 | `kind`                 | `"tool"`                                                      |
 | `title`                | `` `MCP approval: ${serverName}` ``                           |
-| `description`          | the elicitation `message`, e.g. `Allow Computer Use to use Safari?` |
+| `description`          | the elicitation `message`, e.g. `Allow Computer Use to use "Safari"?` |
 | `metadata.serverName`  | MCP server name                                               |
 | `input.mode`           | `"form"` or `"openai/form"` (`url` mode is auto-declined by Paseo and never reaches plugins) |
 
 The reply for `behavior: "allow"` is `{ action: "accept", content: {}, _meta: null }`.
 
-From the bug report, Codex tags these requests with `connector_id: "computer-use"` inside
-`_meta`, which Paseo drops. **The exact `metadata.serverName` for Computer Use has not been
-observed.** It is probably `computer-use`, but the builder must confirm it (see Build order).
+### Observed card (2026-11-03, this Mac, Paseo 0.14.0, Codex gpt-6.1-sol, Auto-review mode)
+
+Captured live from a probe agent reading Safari. Two consecutive cards in the same turn, the
+second right after the first was allowed, with identical shape (bug reproduced):
+
+```json
+{
+  "provider": "codex",
+  "name": "CodexMcpElicitation",
+  "kind": "tool",
+  "title": "MCP approval: cua_repl",
+  "description": "Allow Computer Use to use \"Safari\"?",
+  "input": { "mode": "form", "requestedSchema": { "type": "object", "properties": {} }, "url": null },
+  "metadata": { "threadId": "…", "turnId": "…", "serverName": "cua_repl", "elicitationId": null }
+}
+```
+
+- **`metadata.serverName` is `cua_repl`.** (The bug report's `connector_id: "computer-use"`
+  lives in `_meta`, which Paseo drops; it is not visible to plugins.)
+- **The app name is wrapped in double quotes** in the current Computer Use plugin. The bug
+  report (older Computer Use build) showed it unquoted: `Allow Computer Use to use Safari?`.
+- `provider` is the string `"codex"`. `elicitationId` is `null`, so it cannot be used as a key.
 
 Plugin API (Paseo 0.14+, verified in `public-docs/plugins/hooks.md` and the 0.15.0 package types):
 
@@ -96,10 +115,12 @@ Plugin API (Paseo 0.14+, verified in `public-docs/plugins/hooks.md` and the 0.15
 A pending request is a **Computer Use card** only if all of these hold:
 
 1. `request.name === "CodexMcpElicitation"`
-2. `request.provider` is the Codex provider
-3. `request.metadata.serverName` equals the confirmed Computer Use server name (one constant)
-4. `request.description` matches exactly `^Allow Computer Use to use (.+)\?$`; capture group 1
-   is the **app name**, used verbatim (case-sensitive, no trimming beyond the regex)
+2. `request.provider === "codex"`
+3. `request.metadata.serverName === "cua_repl"`
+4. `request.description` matches exactly `^Allow Computer Use to use (?:"([^"]+)"|([^"?]+))\?$`
+   (quoted form as observed today, unquoted form as in the bug report). The captured group is
+   the **app name**, used verbatim (case-sensitive). `"Safari"` and `Safari` map to the same
+   app `Safari`.
 
 Anything else is ignored entirely: not recorded, not answered.
 
@@ -164,16 +185,12 @@ On `agent.permission.after`:
 ## Build order
 
 1. Scaffold with `paseo plugin init`, set `requirements.paseo` to `>=0.14.0`.
-2. **Confirm the server name first.** Add a temporary `agent.permission.before` hook that logs
-   `name`, `provider`, `metadata.serverName`, and `description` for every request. Run a Codex
-   agent that uses Computer Use on Safari, read `paseo plugin logs`, set the constant, remove
-   the logging.
-3. Matcher, state file, hooks, RPCs, then the screen.
-4. One small runnable test for the matcher and the state transitions: unknown → `new`;
+2. Matcher, state file, hooks, RPCs, then the screen.
+3. One small runnable test for the matcher and the state transitions: unknown → `new`;
    `new` + manual allow → `on`; `new` + deny, then a later manual allow → `on`; `on` →
    auto-approve; screen off → `revoked`; `revoked` + manual allow → stays `revoked`;
    non-matching request untouched.
-5. Write `OVERVIEW.md` stating plainly that this auto-approves on the user's behalf, what it
+4. Write `OVERVIEW.md` stating plainly that this auto-approves on the user's behalf, what it
    matches, and that it should be removed once #7719 ships.
 
 ## Verification
