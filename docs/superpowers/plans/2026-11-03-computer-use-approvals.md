@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Plugin id `computer-use-approvals`; `paseo-plugin.json` `requirements.paseo` = `">=0.14.0"`.
-- Dev dependency versions follow `~/Developer/personal-project/paseo-quote-reply/package.json` (`@getpaseo/plugin` and `@getpaseo/protocol` pinned `0.14.0`, `zod ^4.4.3`, `react 19.1.0`, `react-native 0.81.5`, `typescript ^5.9.3`, `@tanstack/react-query ^5.90.11`, `@types/react ~19.2.0`). npm, not another package manager (matches the sibling repo and `paseo plugin init`).
+- Dev dependency versions follow a sibling Paseo plugin pinned to 0.14.0 (`@getpaseo/plugin` and `@getpaseo/protocol` pinned `0.14.0`, `zod ^4.4.3`, `react 19.1.0`, `react-native 0.81.5`, `typescript ^5.9.3`, `@tanstack/react-query ^5.90.11`, `@types/react ~19.2.0`). npm, not another package manager (matches the sibling repo and `paseo plugin init`).
 - Imports between plugin modules use package `imports` aliases (user prefers absolute imports): `"#shared/*": "./shared/*.ts"`, `"#server/*": "./server/*.ts"`, `"#client/*": "./client/*.tsx"`. If Paseo's bundler rejects pattern aliases at install, fall back to one explicit alias per file as the sibling repo does (`"#match": "./shared/match.ts"`).
 - Match exactly: `name === "CodexMcpElicitation"`, `provider === "codex"`, `metadata.serverName === "cua_repl"`, description regex `^Allow Computer Use to use (?:"([^"]+)"|([^"?]+))\?$`.
 - The plugin only ever responds `{ behavior: "allow" }`. Never deny.
@@ -50,7 +50,7 @@
 
 - [ ] **Step 1: Scaffold**
 
-Run from `~/Developer/personal-project/paseo-computer-use-approvals`: `paseo plugin init "$PWD"` (if it refuses the non-empty directory, init into `$TMPDIR/cua-scaffold` and copy the files in, leaving `docs/` untouched). Set id, `name: "Computer Use approvals"`, description, `requirements.paseo: ">=0.14.0"`. Edit `package.json` per Interfaces and Global Constraints. `npm install`.
+Run from the repository root: `paseo plugin init "$PWD"` (if it refuses the non-empty directory, init into `$TMPDIR/cua-scaffold` and copy the files in, leaving `docs/` untouched). Set id, `name: "Computer Use approvals"`, description, `requirements.paseo: ">=0.14.0"`. Edit `package.json` per Interfaces and Global Constraints. `npm install`.
 
 - [ ] **Step 2: Write the failing test** `tests/match.test.ts`
 
