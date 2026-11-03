@@ -63,3 +63,12 @@ test("schema defaults to empty and rejects unknown statuses", () => {
   assert.deepEqual(approvalsStateSchema.parse({}), { apps: {} });
   assert.throws(() => approvalsStateSchema.parse({ apps: { X: { status: "maybe" } } }));
 });
+
+test("inherited object property names are treated as unknown apps", () => {
+  const state = empty();
+  assert.throws(() => setEnabled(state, "__proto__", true), /Unknown app/);
+  assert.throws(() => setEnabled(state, "toString", true), /Unknown app/);
+  assert.equal(recordSeen(state, "constructor", T1), "new");
+  assert.equal(state.apps["constructor"]?.status, "new");
+  assert.equal(({} as { status?: string }).status, undefined);
+});
