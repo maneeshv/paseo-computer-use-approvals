@@ -2,7 +2,7 @@
   "name": "computer-use-approvals",
   "private": true,
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "imports": {
     "#shared/*": "./shared/*.ts",
     "#server/*": "./server/*.ts",
@@ -31,6 +31,17 @@
     "react-native": "0.81.5",
     "typescript": "^5.9.3",
     "zod": "^4.4.3"
+  },
+  "description": "Auto-approve repeat Codex Computer Use app prompts in Paseo for apps you switch on.",
+  "license": "MIT",
+  "author": "Maneesh (maneeshv)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maneeshv/paseo-computer-use-approvals.git"
+  },
+  "homepage": "https://github.com/maneeshv/paseo-computer-use-approvals#readme",
+  "bugs": {
+    "url": "https://github.com/maneeshv/paseo-computer-use-approvals/issues"
   },
   "engines": {
     "node": ">=22.18.0"
