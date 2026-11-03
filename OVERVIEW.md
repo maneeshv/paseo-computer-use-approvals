@@ -5,7 +5,7 @@ It is a stopgap for a Paseo bug ([getpaseo/paseo#6368](https://github.com/getpas
 ## How it works
 
 - The first time Codex asks about an app, the app appears on the Computer Use approvals screen in the sidebar, switched off, and you answer the prompt as usual.
-- Your first Allow for that app switches it on. From then on, the plugin approves that app's prompts on your behalf.
+- Your first Allow for that app switches it on. From then on, the plugin approves that app's prompts on your behalf. Paseo does not say who answered a prompt, so an Allow sent by another agent (for example an orchestrator answering its child's prompt) also switches the app on.
 - Switch an app off on the screen to revoke it. Prompts for a revoked app wait for you again, and allowing one of them is a one-time answer. Only the screen switches a revoked app back on.
 - The plugin only ever approves or leaves a prompt alone. It never denies anything.
 

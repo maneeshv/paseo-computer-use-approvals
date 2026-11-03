@@ -26,8 +26,9 @@ export function registerApprovals(
         });
         recordAutoApproved(store.state, app, now());
         log(`auto-approved Computer Use: ${app} agent=${agent.id}`);
-      } catch {
-        // The user answered first, or the request was cleared. Nothing to do.
+      } catch (error) {
+        // Usually the user answered first or the request was cleared; log so other failures are visible.
+        log(`auto-approve skipped: ${app} agent=${agent.id}: ${(error as Error).message}`);
       }
     } else {
       pending.set(request.id, app);

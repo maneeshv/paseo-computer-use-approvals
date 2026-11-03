@@ -108,7 +108,7 @@ test("a rejected auto-approval is swallowed and not recorded as approved", async
   await t.after("r1", "allow");
   await t.before("Safari", "r2");
   assert.equal((await t.list())[0].lastAutoApprovedAt, null);
-  assert.deepEqual(t.logs, []);
+  assert.deepEqual(t.logs, ["auto-approve skipped: Safari agent=a1: already resolved"]);
 });
 
 test("non-matching requests are ignored entirely", async () => {
