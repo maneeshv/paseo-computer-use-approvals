@@ -221,7 +221,7 @@ On `agent.permission.after`:
 - **No delete-row action.** Rows only switch on and off.
 - **No live push to the screen**; it refetches while open.
 - **Plugin id and repo name**: `computer-use-approvals` in
-  `~/Developer/personal-project/paseo-computer-use-approvals`.
+  the repository `paseo-computer-use-approvals`.
 
 ## Left to the builder
 

@@ -4,6 +4,6 @@
   "description": "Auto-approve repeat Codex Computer Use app-access prompts for apps you switch on.",
   "media": [],
   "requirements": {
-    "paseo": ">=0.14.0"
+    "paseo": ">=0.14.0 <0.15.0"
   }
 }
