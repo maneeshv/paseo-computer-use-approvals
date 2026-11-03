@@ -1,0 +1,9 @@
+{
+  "id": "computer-use-approvals",
+  "name": "Computer Use approvals",
+  "description": "Auto-approve repeat Codex Computer Use app-access prompts for apps you switch on.",
+  "media": [],
+  "requirements": {
+    "paseo": ">=0.14.0"
+  }
+}
