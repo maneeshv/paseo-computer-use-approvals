@@ -1,29 +1,18 @@
-<!--
-OVERVIEW.md is required to list your plugin in the registry. Keep it beside
-paseo-plugin.json in your repository at the pinned commit and in your npm package.
-Replace this comment with useful facts before publishing.
+Computer Use approvals answers repeat Codex Computer Use prompts for you. When a Codex agent asks "Allow Computer Use to use Safari?", you allow it once and the plugin approves later prompts for that app automatically, so the agent can keep working unattended.
 
-This overview is for people choosing a plugin in Paseo, on the plugin page under
-its install command. README assumes a GitHub audience and includes technical
-details, installation instructions, and badges. Long, AI-generated READMEs leave
-people reading past that material to understand what the plugin does.
+It is a stopgap for a Paseo bug ([getpaseo/paseo#6368](https://github.com/getpaseo/paseo/issues/6368)) where Paseo drops Codex's "remember this" choice, so Codex asks again on every call. Remove the plugin once a Paseo release includes [#7719](https://github.com/getpaseo/paseo/pull/7719).
 
-Write these parts in order, including only what helps someone decide to install:
+## How it works
 
-1. Describe what your plugin is and does in plain terms first.
-2. Explain how it works only when it is not obvious.
-3. Explain setup when needed: settings, accounts, tokens, providers, tools, or
-   other plugins. Include applicable daemon version and operating system
-   requirements. Setup guidance is allowed; installation instructions are not.
-4. Explain capabilities and settings worth understanding, what each option does,
-   what the plugin reads or sends and where, permissions, and known limits.
+- The first time Codex asks about an app, the app appears on the Computer Use approvals screen in the sidebar, switched off, and you answer the prompt as usual.
+- Your first Allow for that app switches it on. From then on, the plugin approves that app's prompts on your behalf.
+- Switch an app off on the screen to revoke it. Prompts for a revoked app wait for you again, and allowing one of them is a one-time answer. Only the screen switches a revoked app back on.
+- The plugin only ever approves or leaves a prompt alone. It never denies anything.
 
-Length follows complexity; a theme needs one paragraph. Choose headings only
-when they help. Use sentence case and plain factual language, with no em dashes.
-Omit installation commands, badges, changelog, contributing or license sections,
-marketing, and unsupported claims. Avoid implementation filler such as empty
-cleanup functions, theme-token field lists, or lists of absent features.
+## What it matches
 
-To translate the overview, add a whole copy beside this file named for the
-language, such as OVERVIEW.zh-CN.md. Readers in that language see it instead.
--->
+Only Codex prompts from the Computer Use server (`cua_repl`) whose text is exactly "Allow Computer Use to use …?". Every other prompt, including other MCP servers, shell commands, and plans, is ignored.
+
+## Setup and limits
+
+Requires Paseo 0.14.0 or later with plugins enabled. The app list is stored per host in `~/.paseo/plugin-data/computer-use-approvals/state.json` and is not synced between machines. Codex still sends a request on every call; the plugin answers it immediately. Each auto-approval is logged in the plugin logs.
