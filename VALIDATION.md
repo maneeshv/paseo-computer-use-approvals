@@ -17,4 +17,6 @@ Checked on 2026-11-04 after building against `@getpaseo/plugin` and `@getpaseo/p
 
 - `npm run typecheck` and `npm test` passed (19 tests).
 - Compared the 0.14.0 and 0.15.0 SDK declarations. 0.15 adds `addHook` with renamed hooks (`agent.permission.before`, `agent.permission.after`) and keeps `on("agent.permission_requested" | "agent.permission_resolved")` as deprecated aliases that map to them, with identical payloads. `AgentPermissionRequest`, `AgentPermissionResponse`, `respondToPermission`, `defineRpc`, `useRpc`, and the client UI components used here are unchanged. The plugin keeps the old names because the 0.14.0 SDK has no `addHook`; move to `addHook` and raise the minimum to 0.15 before the aliases are removed after 2027-04-30.
-- Not yet verified on a 0.15.0 daemon: loading the plugin and an end-to-end auto-approval.
+- After `paseo plugin reload computer-use-approvals`, the plugin installed from this directory reported `running` on a local 0.15.0 daemon; logs showed Plugin ready.
+- The installed 0.15.0 daemon maps `agent.permission_requested` to `agent.permission.before` and `agent.permission_resolved` to `agent.permission.after`, so the deprecated names are still routed at runtime.
+- Not yet verified: an end-to-end auto-approval on 0.15, and running this build on a 0.14 daemon.
