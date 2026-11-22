@@ -15,4 +15,4 @@ Only Codex prompts from the Computer Use server (`cua_repl`) whose text is exact
 
 ## Setup and limits
 
-Requires Paseo 0.14.x or 0.15.x with plugins enabled. The app list is stored per host in `~/.paseo/plugin-data/computer-use-approvals/state.json` and is not synced between machines. Codex still sends a request on every call; the plugin answers it immediately. Each auto-approval is logged in the plugin logs.
+Requires Paseo >=0.14.0 with plugins enabled. The minimum-only range admits newer releases; it does not guarantee future compatibility. This revision has compile and unit-test coverage with SDKs 0.14.0, 0.15.0, and 0.17.2, but no new live app/daemon acceptance. See [validation notes](VALIDATION.md) for historical checks. The app list is stored per host in `~/.paseo/plugin-data/computer-use-approvals/state.json` and is not synced between machines. Codex still sends a request on every call; the plugin answers it immediately. Each auto-approval is logged in the plugin logs.

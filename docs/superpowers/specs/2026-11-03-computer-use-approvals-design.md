@@ -90,7 +90,11 @@ second right after the first was allowed, with identical shape (bug reproduced):
   report (older Computer Use build) showed it unquoted: `Allow Computer Use to use Safari?`.
 - `provider` is the string `"codex"`. `elicitationId` is `null`, so it cannot be used as a key.
 
-Plugin API (Paseo 0.14+, verified in `public-docs/plugins/hooks.md` and the 0.15.0 package types):
+Plugin API (updated 2026-11-22 after inspecting published 0.14.0, 0.15.0 and 0.17.2 SDKs):
+
+The 0.14.0 package lacks `addHook`. Use the modern hooks below when available and otherwise
+register `agent.permission_requested` / `agent.permission_resolved` with `on`. Register only
+one path. The minimum remains 0.14.0; tested SDK versions do not define an upper bound.
 
 - `server.addHook("agent.permission.before", async ({ agent, request }, { paseo }) => …)`:
   notification, Paseo does not wait. Answer with
@@ -98,7 +102,7 @@ Plugin API (Paseo 0.14+, verified in `public-docs/plugins/hooks.md` and the 0.15
   Responding to an already-resolved request throws.
 - `server.addHook("agent.permission.after", async ({ agent, requestId, resolution }) => …)`:
   fires on every resolution. It carries only `requestId`, not the request, so the plugin must
-  remember the matched request from `.before`, keyed by `requestId`.
+  remember the matched request from `.before`, keyed by the pair `(agent.id, requestId)`.
 - `server.registerSettings(...)` gives the server only `read()` and `subscribe()`. **The server
   cannot write Paseo settings.** Paseo also gives plugins no data directory. Therefore state lives
   in a plugin-owned JSON file (below), not in `defineSettings`.
@@ -143,7 +147,7 @@ The screen shows `new` and `revoked` both as "off"; `new` rows may carry a hint 
 On `agent.permission.before` for a Computer Use card with app `A`:
 
 - `A` unknown: add a row `{ status: "new" }` with timestamps, then treat as `new`.
-- `A` is `new` or `revoked`: update `lastSeenAt`, remember `request.id → A` in memory, leave
+- `A` is `new` or `revoked`: update `lastSeenAt`, remember `(agent.id, request.id) → A` in memory, leave
   the card for the user.
 - `A` is `on`: call `respondToPermission(allow)`, update `lastSeenAt` and
   `lastAutoApprovedAt`, and log one line (`auto-approved Computer Use: <A> agent=<id>`).
@@ -151,14 +155,15 @@ On `agent.permission.before` for a Computer Use card with app `A`:
 
 On `agent.permission.after`:
 
-- If `requestId` is remembered for app `A`, `resolution.behavior === "allow"`, and `A` is
+- If `(agent.id, requestId)` is remembered for app `A`, `resolution.behavior === "allow"`, and `A` is
   **currently** `new` (re-read the file, not the status at `.before` time), set `A` to `on`.
 - A manual Allow on a `revoked` app is a one-time approval and does **not** turn it back on.
   Only the screen does that. (Confirmed with the user.)
 - Deny, cancel, or dismissal leaves `A` as it was. The next manual Allow on any later card for
   a `new` app still turns it on, so a denied first card, two concurrent cards, or a lost
   in-memory entry after a restart never leave an app stuck.
-- Forget the remembered `requestId` either way. The in-memory map does not need to survive
+- Forget the remembered `(agent.id, requestId)` either way. Unregister both handlers and clear
+  pending correlations when the contribution is torn down. The in-memory map does not need to survive
   restarts: a card left open across a restart simply is not recorded, and the next card is.
 
 ### Screen

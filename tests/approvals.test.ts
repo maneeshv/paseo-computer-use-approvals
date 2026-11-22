@@ -9,7 +9,7 @@ import { loadStore } from "#server/store";
 type Handler = (input: any, context?: any) => Promise<unknown> | unknown;
 type Sent = { agentId: string; requestId: string; response: unknown };
 
-function setup(options: { rejectResponses?: boolean } = {}) {
+function setup(options: { rejectResponses?: boolean; modern?: boolean } = {}) {
   const dir = mkdtempSync(join(tmpdir(), "cua-approvals-"));
   const path = join(dir, "state.json");
   const hooks = new Map<string, Handler>();
@@ -26,16 +26,24 @@ function setup(options: { rejectResponses?: boolean } = {}) {
       }),
     },
   };
+  const register = (name: string, handler: Handler) => {
+    hooks.set(name, handler);
+    return () => { hooks.delete(name); };
+  };
   const server = {
-    on: (name: string, handler: Handler) => (hooks.set(name, handler), () => {}),
+    addHook: options.modern ? register : undefined,
+    on: (name: string, handler: Handler) => {
+      assert.equal(options.modern, undefined, "modern hosts must not use legacy hooks");
+      return register(name, handler);
+    },
     handle: (contract: { name: string }, handler: Handler) => void rpcs.set(contract.name, handler),
   };
   const store = loadStore(path);
-  registerApprovals(server as any, store, { now: () => "2026-11-03T10:00:00.000Z", log: (m) => logs.push(m) });
+  const cleanup = registerApprovals(server as any, store, { now: () => "2026-11-03T10:00:00.000Z", log: (m) => logs.push(m) });
   const context = { paseo, signal: new AbortController().signal };
 
   const before = (app: string, requestId: string, agentId = "a1", over: Record<string, unknown> = {}) =>
-    hooks.get("agent.permission_requested")!(
+    hooks.get(options.modern ? "agent.permission.before" : "agent.permission_requested")!(
       {
         agent: { id: agentId },
         request: {
@@ -51,12 +59,12 @@ function setup(options: { rejectResponses?: boolean } = {}) {
       context,
     );
   const after = (requestId: string, behavior: "allow" | "deny", agentId = "a1") =>
-    hooks.get("agent.permission_resolved")!({ agent: { id: agentId }, requestId, resolution: { behavior } }, context);
+    hooks.get(options.modern ? "agent.permission.after" : "agent.permission_resolved")!({ agent: { id: agentId }, requestId, resolution: { behavior } }, context);
   const list = async () => ((await rpcs.get("approvals.list")!({})) as { apps: Array<{ name: string; status: string; lastAutoApprovedAt: string | null }> }).apps;
   const status = async (name: string) => (await list()).find((app) => app.name === name)?.status;
   const setEnabledRpc = (name: string, enabled: boolean) => rpcs.get("approvals.set-enabled")!({ name, enabled });
 
-  return { dir, path, sent, logs, before, after, list, status, setEnabledRpc };
+  return { dir, path, sent, logs, before, after, list, status, setEnabledRpc, hooks, cleanup };
 }
 
 test("first manual allow turns an app on and the next card is auto-approved", async () => {
@@ -141,3 +149,35 @@ test("an unreadable state file is moved aside, not overwritten", () => {
   assert.equal(readdirSync(dir).filter((f) => f.startsWith("state.json.corrupt-")).length, 1);
   assert.equal(logs.length, 1);
 });
+
+for (const modern of [undefined, true]) {
+  test(`${modern ? "modern" : "legacy"} hooks correlate agent and request and forget resolutions`, async () => {
+    const t = setup({ modern });
+    await t.before("Safari", "same", "a1");
+    await t.before("Notes", "same", "a2");
+    await t.after("same", "allow", "unrelated");
+    await t.after("unknown", "allow", "a1");
+    assert.equal(await t.status("Safari"), "new");
+    assert.equal(await t.status("Notes"), "new");
+    await t.after("same", "deny", "a1");
+    await t.after("same", "allow", "a1");
+    assert.equal(await t.status("Safari"), "new");
+    await t.after("same", "allow", "a2");
+    assert.equal(await t.status("Notes"), "on");
+    await t.before("Notes", "next", "a2");
+    assert.deepEqual(t.sent, [{ agentId: "a2", requestId: "next", response: { behavior: "allow" } }]);
+    await t.before("Notes", "other-server", "a2", { metadata: { serverName: "node_repl" } });
+    assert.equal(t.sent.length, 1);
+    await t.setEnabledRpc("Notes", false);
+    await t.before("Notes", "revoked", "a2");
+    await t.after("revoked", "allow", "a2");
+    assert.equal(await t.status("Notes"), "revoked");
+    assert.equal(t.sent.length, 1);
+    await t.before("Finder", "pending");
+    const after = t.hooks.get(modern ? "agent.permission.after" : "agent.permission_resolved")!;
+    t.cleanup();
+    assert.equal(t.hooks.size, 0);
+    await after({ agent: { id: "a1" }, requestId: "pending", resolution: { behavior: "allow" } });
+    assert.equal(await t.status("Finder"), "new");
+  });
+}
