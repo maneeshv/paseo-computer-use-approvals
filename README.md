@@ -28,11 +28,13 @@ A plugin cannot make Codex save the approval: its answer goes through the same P
 
 | Component | Compatibility |
 | --- | --- |
-| Paseo app and daemon | 0.14.x or 0.15.x, with plugins enabled. SDK pinned to 0.15.0 |
+| Paseo app and daemon | >=0.14.0, with plugins enabled. Development SDK pinned to 0.15.0 |
 | Codex | Tested with Codex CLI 0.162.1 and the Codex Computer Use app 26.1022.1001641 on macOS |
 | Development | Node.js 22.18 or later and npm; lockfile included |
 
-The plugin uses Paseo's `agent.permission_requested` and `agent.permission_resolved` plugin events. Paseo marks them deprecated and supports them until 2027-04-30. Paseo 0.15 renames them `agent.permission.before` and `agent.permission.after` (registered with `addHook`), which the 0.14.0 SDK does not declare, so the plugin keeps the old names to support both releases. Only macOS has been tested.
+The manifest has no upper version bound; it is an admission policy, not a guarantee for future releases. This revision typechecks and passes unit tests with SDK/protocol 0.14.0, 0.15.0, and 0.17.2. Historical live checks and untested surfaces are recorded in [VALIDATION.md](VALIDATION.md).
+
+The plugin uses `agent.permission.before` and `agent.permission.after` through `addHook` when available. The published 0.14.0 SDK lacks `addHook`, so only those older hosts use the legacy `agent.permission_requested` and `agent.permission_resolved` events. Both paths use the same handlers and correlate resolutions by agent ID and request ID. Modern hosts do not register deprecated aliases. Only macOS has historical live coverage.
 
 ## Install
 

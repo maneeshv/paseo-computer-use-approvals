@@ -7,6 +7,5 @@ import { loadStore } from "#server/store";
 const STATE_FILE = join(homedir(), ".paseo", "plugin-data", "computer-use-approvals", "state.json");
 
 export default function contribute(server: PluginServerContext) {
-  registerApprovals(server, loadStore(STATE_FILE));
-  return () => {};
+  return registerApprovals(server, loadStore(STATE_FILE));
 }
